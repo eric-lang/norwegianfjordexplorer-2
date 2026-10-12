@@ -1,0 +1,5 @@
+Gascogne Regular supplied by the user in the V2 folder.
+Source file: Gascogne-Regular-normal-400-100.ttf
+The supplied 400 and 500 files contain the same font data. The hero uses weight 400.
+SHA-1: 75ba326d2d0949be6b152a31f506e382be69cd37
+This matches the Gascogne-Regular digest saved in the Figma hero glyph metadata.

@@ -1,0 +1,10 @@
+/design-inspection
+/.cache
+/.astro
+/node_modules
+/dist
+/*.fig
+/Gascogne-*.ttf
+/hero-video.mp4
+/V2-PLAN.md
+/scripts/verify-*.cjs

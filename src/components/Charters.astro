@@ -1,0 +1,50 @@
+---
+const charters=[
+  {title:'Adventure Cruise to Lofoten & Lyngsalpene With Bike or Ski',alt:'View over the blue fjord and coastal landscape of Northern Norway',description:'Bring your sense of adventure. Talk with the crew about combining days on the water with cycling or skiing ashore.'},
+  {title:'On the Loose Between Tromsø, Senja, Vesterålen, Lofoten',alt:'Guests carrying skis along a snowy waterfront before an Arctic adventure',description:'Make the journey your own. Plan a private cruise through the islands and fjords with Captain Mads and his team.'},
+];
+---
+<section class="charters" id="charters" aria-labelledby="charters-heading">
+  <header class="charters__header" data-reveal>
+    <p class="charters__label"><span aria-hidden="true"></span>Charter</p>
+    <h2 id="charters-heading">Charter Possibilities</h2>
+  </header>
+  <div class="charters__grid">
+    {charters.map((charter,index)=><a class="charter-card" href="#panel-booking" data-open-panel="booking" data-experience-title={charter.title} data-experience-summary={charter.description} aria-label={`${charter.title} — enquire about your charter`} data-reveal style={`--reveal-delay:${index*100}ms`}>
+      <img src={`/images/charter-${index+1}.webp`} alt={charter.alt} width="1100" height="790" loading="lazy" />
+      <span class="charter-card__shade" aria-hidden="true"></span>
+      <span class="charter-card__arrow" aria-hidden="true">↗</span>
+      <div class="charter-card__caption">
+        <p class="charter-card__label"><span aria-hidden="true"></span>Charter</p>
+        <h3>{charter.title}</h3>
+        <div class="charter-card__extra"><p>{charter.description}</p><span class="theme-action"><span class="theme-action__circle theme-action__circle--left" aria-hidden="true">↗</span><span class="theme-action__label">Plan Your Charter</span><span class="theme-action__circle theme-action__circle--right" aria-hidden="true">↗</span></span></div>
+      </div>
+    </a>)}
+  </div>
+</section>
+<style>
+  .charters {padding:4rem var(--page-gutter) 6rem;background:var(--paper);color:var(--navy);}
+  .charters__header,.charters__grid {max-width:90rem;margin-inline:auto;}
+  .charters__header {text-align:center;margin-bottom:3rem;}
+  .charters__label {margin:0 0 1.125rem;color:var(--red);font:400 1.125rem/1.5 'IBM Plex Mono',monospace;}
+  .charters h2 {margin:0;color:#1e1e1e;font:400 3.9375rem/1.11 var(--heading-font);}
+  .charters__grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.125rem;}
+  .charter-card {position:relative;display:block;min-width:0;overflow:hidden;border-radius:1.125rem;color:var(--navy);text-decoration:none;background:#fff;transition:background 400ms;}
+  .charter-card img {display:block;width:100%;height:auto;aspect-ratio:1.6;object-fit:cover;transform:scale(1.025);transition:transform 850ms cubic-bezier(.22,1,.36,1),filter 500ms;}
+  .charter-card__shade {display:none;}
+  .charter-card__caption {position:relative;padding:1.6875rem;background:inherit;}
+  .charter-card__label {margin:0 0 .75rem;color:var(--red);font:400 .875rem/1.5 'IBM Plex Mono',monospace;}
+  .charter-card h3 {margin:0;color:#1e1e1e;font:400 1.96875rem/1.2 var(--heading-font);}
+  .charter-card__arrow {position:absolute;top:1.25rem;right:1.25rem;display:grid;place-items:center;width:2.75rem;height:2.75rem;border-radius:50%;background:var(--cream);color:var(--navy);font-size:1.5rem;transition:background 250ms,color 250ms,rotate 400ms;}
+  .charter-card__extra p {margin:1.125rem 0;font:400 1rem/1.6 var(--body-font);}
+  .charter-card__extra>span {display:inline-flex;}
+  .charter-card:is(:hover,:focus-visible) {background:#fffdf7;}
+  .charter-card:is(:hover,:focus-visible) img {transform:scale(1);filter:brightness(.9);}
+  .charter-card:is(:hover,:focus-visible) .charter-card__arrow {background:var(--navy);color:var(--cream);rotate:45deg;}
+  @media(max-width:68.75rem) {.charters h2 {font-size:3.25rem;}}
+  @media(max-width:40rem) {.charters {padding-top:3rem;padding-bottom:3rem;}.charters h2 {font-size:2.5rem;}.charters__label {font-size:.875rem;}.charters__grid {grid-template-columns:1fr;}.charter-card__caption {padding:1.5rem;}.charter-card h3 {font-size:1.75rem;}}
+  @media(prefers-reduced-motion:reduce) {.charter-card,.charter-card img,.charter-card__arrow {transition:none;}}
+</style>
+
+
+

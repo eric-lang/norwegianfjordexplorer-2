@@ -1,0 +1,17 @@
+node_modules/
+.astro/
+dist/
+.cache/
+.pnpm-store/
+.env*
+design-inspection/
+*.fig
+
+/hero-video.mp4
+
+.vercel/
+/Gascogne-*.ttf
+V2-PLAN.md
+
+.vercel
+

@@ -1,0 +1,193 @@
+---
+import BookingButton from './BookingButton.astro';
+const navigation = [
+  {label:'Experiences',panel:'experiences'},
+  {label:'About',panel:'about'},
+  {label:'Vessel',panel:'vessel'},
+  {label:'Stories',panel:'stories'},
+];
+const panels = [
+  {id:'experiences',eyebrow:'Choose your experience',title:'Your Arctic journey starts here.',copy:'Discover Tromsø from the water, explore Lofoten and Vesterålen, or plan a special cruise with the crew. Tell us what you have in mind and we’ll help you find your journey.'},
+  {id:'about',eyebrow:'Meet your host',title:'Welcome aboard with Captain Mads.',copy:'Mads comes from a family rich in seafaring traditions. Come and say hello in the wheelhouse, learn about polar navigation, and hear the stories behind the journey.'},
+  {id:'vessel',eyebrow:'Life on board',title:'More than just a boat.',copy:'A classic cruiser with a cozy, intimate atmosphere. Enjoy the restaurant, bar, and kitchen on board, with comfortable spaces for conversation and views of the Arctic coastline.'},
+  {id:'stories',eyebrow:'The boat and its crew',title:'Every fjord has a story.',copy:'Meet the people behind the voyage—from conversations with Captain Mads to moments on deck as the coastline unfolds. Explore the boat and crew’s documentary through our team.'},
+  {id:'booking',eyebrow:'Norwegian Fjord Explorer',title:'Let’s plan your cruise.',copy:'A day on the fjord, a journey through Lofoten, or a private charter. Share your plans with our crew and we’ll help you choose the experience that fits.'},
+];
+---
+<section class="hero" id="home" aria-labelledby="hero-heading">
+  <div class="hero__photo" aria-hidden="true">
+    <img src="/images/hero-video-poster.jpg" alt="" width="1024" height="1536" fetchpriority="high" /><video class="hero__video" poster="/images/hero-video-poster.jpg" muted loop playsinline preload="none" aria-hidden="true" data-hero-video></video>
+  </div>
+  <div class="hero__shade" aria-hidden="true"></div>
+  <header class="site-header">
+    <a class="site-logo" href="#home" aria-label="Norwegian Fjord Explorer home"><img src="/images/explorer-logo.png" alt="Norwegian Explorer" width="53" height="53" /></a>
+    <nav class="desktop-nav" aria-label="Main navigation">
+      {navigation.map(item=>(item.panel==='experiences'||item.panel==='vessel'||item.panel==='about'||item.panel==='stories')?<a href={item.panel==='stories'?'#gallery':'#'+item.panel} data-menu-link>{item.label}</a>:<button type="button" data-open-panel={item.panel} aria-haspopup="dialog">{item.label}</button>)}
+    </nav>
+    <div class="site-header__actions">
+      <BookingButton />
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu"><span></span><span></span></button>
+    </div>
+    <nav class="mobile-nav" id="mobile-menu" aria-label="Mobile navigation" hidden>
+      {navigation.map(item=>(item.panel==='experiences'||item.panel==='vessel'||item.panel==='about')?<a href={'#'+item.panel} data-menu-link>{item.label}<span aria-hidden="true">↗</span></a>:<button type="button" data-open-panel={item.panel} aria-haspopup="dialog">{item.label}<span aria-hidden="true">↗</span></button>)}
+    </nav>
+  </header>
+  <div class="hero__content">
+    <h1 id="hero-heading"><span>Authentic Arctic</span><span>cruise in Norway</span></h1>
+    <p>More than just a boat, Tromsø Trips offers authentic Arctic cruise experiences in Norway, with a unique restaurant, bar, and kitchen on board.</p>
+  </div>
+  <p class="hero__signature"><span class="hero__signature-text">Tromsø · Lofoten · Vesterålen</span></p>
+</section>
+{panels.map(panel=><dialog class="info-dialog" id={`panel-${panel.id}`} aria-labelledby={`title-${panel.id}`}>
+  <button class="info-dialog__close" type="button" data-close-panel aria-label="Close dialog">×</button>
+  <p class="info-dialog__eyebrow">{panel.eyebrow}</p>
+  <h2 id={`title-${panel.id}`}>{panel.title}</h2>
+  <p class="info-dialog__copy">{panel.copy}</p>
+  {panel.id==='booking'&&<p class="info-dialog__selection" data-booking-selection hidden></p>}
+  <div class="info-dialog__contacts"><a href="mailto:booking@norwegianfjordexplorer.com">Email the crew <span aria-hidden="true">↗</span></a><a href="tel:+4794791130">Call +47 947 91 130 <span aria-hidden="true">↗</span></a></div>
+</dialog>)}
+<script>
+  const heroVideo=document.querySelector<HTMLVideoElement>('[data-hero-video]');
+  if(heroVideo) {
+    const heroVideoMotion=matchMedia('(prefers-reduced-motion: reduce)');
+    let heroInView=true;
+    function syncHeroVideo() {
+      if(heroVideoMotion.matches||document.hidden||!heroInView) {heroVideo!.pause();return;}
+      if(!heroVideo!.getAttribute('src'))heroVideo!.src=matchMedia('(max-width:47.5rem)').matches?'/videos/hero-video-mobile.mp4':'/videos/hero-video-web.mp4';
+      heroVideo!.muted=true;heroVideo!.defaultPlaybackRate=.2;heroVideo!.playbackRate=.2;
+      heroVideo!.play().catch(()=>{});
+    }
+    heroVideo.addEventListener('playing',()=>heroVideo!.classList.add('is-playing'));
+    heroVideo.addEventListener('error',()=>heroVideo!.classList.remove('is-playing'));
+    heroVideo.addEventListener('loadedmetadata',()=>{heroVideo!.playbackRate=.2;});
+    heroVideoMotion.addEventListener('change',syncHeroVideo);
+    document.addEventListener('visibilitychange',syncHeroVideo);
+    new IntersectionObserver(entries=>{heroInView=entries[0].isIntersecting;syncHeroVideo();},{threshold:0}).observe(heroVideo.closest('.hero')!);
+    syncHeroVideo();
+  }
+
+  const hero=document.querySelector<HTMLElement>('.hero');
+  const cutout=document.querySelector<HTMLElement>('.hero__signature');
+  const destinations=document.querySelector<HTMLElement>('.hero__signature-text');
+  function sizeCutout() {
+    if(!hero||!cutout||!destinations)return;
+    const unit=Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const originalWidth=Math.min(24.1875*unit,hero.clientWidth-3*unit);
+    const textWidth=destinations.getBoundingClientRect().width;
+    // Retain 60% of the original side gaps on mobile and 80% on desktop.
+    const remainingGap=window.matchMedia('(max-width:47.5rem)').matches ? .6 : .8;
+    cutout.style.setProperty('--cutout-width',`${(textWidth+remainingGap*(originalWidth-textWidth))/unit}rem`);
+  }
+  if(hero&&destinations) {
+    const observer=new ResizeObserver(sizeCutout);
+    observer.observe(hero);observer.observe(destinations);
+    document.fonts.ready.then(sizeCutout);
+    sizeCutout();
+  }
+  const toggle=document.querySelector<HTMLButtonElement>('.menu-toggle');
+  const menu=document.querySelector<HTMLElement>('#mobile-menu');
+  function closeMenu() {if(menu)menu.hidden=true;toggle?.setAttribute('aria-expanded','false');toggle?.setAttribute('aria-label','Open menu');}
+  toggle?.addEventListener('click',()=>{if(!menu)return;const open=menu.hidden;menu.hidden=!open;toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',open?'Close menu':'Open menu');});
+  let opener:HTMLElement|null=null;
+  document.querySelectorAll('[data-menu-link]').forEach(link=>link.addEventListener('click',closeMenu));
+  document.querySelectorAll<HTMLElement>('[data-open-panel]').forEach(button=>button.addEventListener('click',event=>{
+    if(button instanceof HTMLAnchorElement)event.preventDefault();
+    closeMenu();
+    const dialog=document.getElementById(`panel-${button.dataset.openPanel}`) as HTMLDialogElement|null;
+    if(!dialog)return;
+    const choice=dialog.querySelector<HTMLElement>('[data-booking-selection]');
+    if(choice) {
+      const title=button.dataset.experienceTitle;
+      choice.hidden=!title;
+      choice.textContent=title ? `${title} — ${button.dataset.experienceSummary ?? ''}` : '';
+      const email=dialog.querySelector<HTMLAnchorElement>('a[href^="mailto:"]');
+      if(email)email.href=title ? `mailto:booking@norwegianfjordexplorer.com?subject=${encodeURIComponent(`Cruise enquiry: ${title}`)}` : 'mailto:booking@norwegianfjordexplorer.com';
+    }
+    opener=button;dialog.showModal();
+  }));
+  document.querySelectorAll<HTMLDialogElement>('.info-dialog').forEach(dialog=>{
+    dialog.querySelector('[data-close-panel]')?.addEventListener('click',()=>dialog.close());
+    dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const bounds=dialog.getBoundingClientRect();if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)dialog.close();});
+    dialog.addEventListener('close',()=>opener?.focus());
+  });
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu&&!menu.hidden){closeMenu();toggle?.focus();}});
+  document.addEventListener('pointerdown',event=>{if(!menu?.hidden&&event.target instanceof Node&&!menu?.contains(event.target)&&!toggle?.contains(event.target))closeMenu();});
+  window.matchMedia('(min-width: 47.5625rem)').addEventListener('change',event=>{if(event.matches)closeMenu();});
+</script>
+<style>
+  .hero {position:relative;isolation:isolate;height:calc(100svh - 1.5rem);margin:.75rem;border-radius:1.40625rem;overflow:hidden;color:white;background:#102d33;}
+  .hero__photo,.hero__shade {position:absolute;inset:0;z-index:-1;}
+  .hero__photo {overflow:hidden;}
+  .hero__photo img {display:block;width:100%;height:100%;object-fit:cover;object-position:center center;transform:translateY(-3rem) scale(1.12);}
+  .hero__shade {background:linear-gradient(180deg,rgb(1 12 17 / .35),rgb(1 12 17 / .12) 38%,rgb(1 12 17 / .62) 76%,rgb(1 12 17 / .9));}
+  .site-header {position:relative;z-index:5;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1.25rem;margin:0;padding:0.875rem 1rem;min-height:5.0625rem;}
+  .site-logo {width:max-content;line-height:0;}
+  .site-logo img {display:block;width:2.5rem;height:2.5rem;}
+  .desktop-nav {display:flex;align-items:center;gap:1.5rem;}
+  .desktop-nav :is(button,a) {position:relative;padding:0;border:0;background:none;color:white;text-decoration:none;font-size:1rem;font-weight:500;letter-spacing:-.01em;font-family:Satoshi,"Helvetica Neue",Arial,sans-serif;}
+  .desktop-nav :is(button,a)::after {content:'';position:absolute;bottom:-0.375rem;left:0;width:100%;height:0.0625rem;background:var(--cream);transform:scaleX(0);transform-origin:right;transition:transform 350ms cubic-bezier(.22,1,.36,1);}
+  .desktop-nav :is(button,a):is(:hover,:focus-visible)::after {transform:scaleX(1);transform-origin:left;}
+  .site-header__actions {justify-self:end;display:flex;align-items:center;gap:1rem;}
+  .hero__content {position:absolute;bottom:clamp(5.3125rem,11.9vh,7.3125rem);left:50%;width:min(53.5625rem,calc(100% - 3rem));transform:translateX(-50%);text-align:center;}
+  .hero h1 {margin:0 0 1.5rem;font:400 clamp(2.75rem,5vw,6rem)/1.05 var(--heading-font);letter-spacing:-.02em;text-wrap:balance;}
+  .hero h1 span {display:block;}
+  .hero__content p {max-width:26.5625rem;margin:0 auto;color:rgb(255 255 255 / .88);font-size:clamp(1rem,1.18vw,1.40625rem);font-weight:500;line-height:1.3;text-wrap:pretty;}
+  .hero__signature {position:absolute;bottom:0;left:50%;translate:-50% 0;width:var(--cutout-width,min(24.1875rem,calc(100% - 3rem)));height:2.75rem;display:grid;place-items:center;margin:0;padding:.625rem 2rem 0;color:var(--red);font:400 .75rem/1.4 "IBM Plex Mono","Courier New",monospace;letter-spacing:.08em;text-transform:uppercase;}
+  .hero__signature::before {content:"";position:absolute;inset:0;background:var(--paper);mask:url('/images/hero-cutout.svg') center / 100% 100% no-repeat;}
+  .hero__signature-text {position:relative;z-index:1;white-space:nowrap;}
+  .menu-toggle,.mobile-nav {display:none;}
+  .info-dialog {width:min(35rem,calc(100% - 2rem));max-height:85svh;padding:3rem;border:0;border-radius:1rem;background:var(--cream);color:var(--navy);box-shadow:0 1.5rem 6.25rem rgb(0 0 0 / .3);}
+  .info-dialog::backdrop {background:rgb(3 15 24 / .7);backdrop-filter:blur(0.375rem);}
+  .info-dialog__close {position:absolute;right:0.875rem;top:0.875rem;width:2.25rem;height:2.25rem;border:0;border-radius:50%;background:var(--navy);color:var(--cream);font-size:1.5rem;}
+  .info-dialog__eyebrow {margin:0 0 1.25rem;color:var(--red);font:400 0.75rem/1.5 "Courier New",monospace;text-transform:uppercase;letter-spacing:.1em;}
+  .info-dialog h2 {margin:0 0 1.25rem;font:400 2.75rem/1.1 var(--heading-font);letter-spacing:-.035em;}
+  .info-dialog__copy {font-size:1.0625rem;line-height:1.6;}
+  .info-dialog__selection {padding:1rem;border-radius:.5rem;background:rgb(27 54 97 / .06);color:var(--navy);font-size:.9375rem;line-height:1.5;}
+  .info-dialog__selection[hidden] {display:none;}
+  .info-dialog__contacts {display:grid;gap:0.75rem;margin-top:1.75rem;}
+  .info-dialog__contacts a {font-size:0.9375rem;font-weight:700;text-underline-offset:0.3125rem;}
+  @media(max-width:68.75rem) {.site-header {padding-inline:1rem;}.desktop-nav {gap:0.8125rem;}.desktop-nav :is(button,a) {font-size:0.9375rem;}}
+  @media(max-width:47.5rem) {
+    .hero {height:calc(100svh - 1.5rem);margin:.75rem;}
+    .site-header {grid-template-columns:auto 1fr;margin:0;padding:1rem 1.25rem;gap:1rem;}
+    .site-logo img {width:2.25rem;height:2.25rem;}
+    .desktop-nav {display:none;}
+    .site-header__actions {gap:0.625rem;}
+    .menu-toggle {display:flex;flex-direction:column;justify-content:center;gap:0.375rem;width:1.875rem;height:2.75rem;padding:0.1875rem;border:0;background:none;color:var(--cream);}
+    .menu-toggle span {display:block;width:1.5rem;height:0.09375rem;background:currentColor;transition:transform 250ms;}
+    .menu-toggle[aria-expanded='true'] span:first-child {transform:translateY(0.234375rem) rotate(45deg);}
+    .menu-toggle[aria-expanded='true'] span:last-child {transform:translateY(-0.234375rem) rotate(-45deg);}
+    .mobile-nav:not([hidden]) {position:absolute;display:flex;flex-direction:column;gap:0.5rem;top:5rem;left:0;right:0;padding:1.125rem;border-radius:1rem;background:var(--cream);color:var(--navy);box-shadow:0 1.25rem 3.125rem rgb(0 0 0 / .25);transform-origin:top right;}
+    .mobile-nav :is(button,a) {display:flex;justify-content:space-between;align-items:center;padding:0.875rem 0.75rem;border:0;border-radius:0.5rem;background:none;color:inherit;text-decoration:none;font-size:1.375rem;text-align:left;transition:background 250ms,padding 250ms;}
+    .mobile-nav :is(button,a):is(:hover,:focus-visible) {padding-left:1.25rem;background:#eae1c1;}
+    .mobile-nav :is(button,a) span {color:var(--red);}
+    .hero__content {bottom:5.625rem;width:calc(100% - 2.5rem);}
+      .hero__content p {max-width:21.875rem;font-size:1rem;line-height:1.5;}
+    .hero__signature {width:var(--cutout-width,min(24.1875rem,calc(100% - 3rem)));max-width:calc(100% - 2rem);font-size:0.625rem;letter-spacing:.03em;padding-inline:0;}
+    .info-dialog {padding:2.75rem 1.5rem 1.75rem;}
+    .info-dialog h2 {font-size:2.25rem;}
+  }
+  @media(max-width:23.75rem) {.site-header {padding-inline:0.75rem;gap:0.625rem;}.site-logo img {width:2rem;height:2rem;}.hero__signature {font-size:0.5625rem;padding-inline:0;}}
+  @media(max-height:40.625rem) and (min-width:47.5625rem) {.hero__content {bottom:4.0625rem;}.hero h1 {font-size:3.5rem;}.hero__content p {font-size:1rem;}.hero h1 {margin-bottom:1rem;}}
+  @media(prefers-reduced-motion:no-preference) {
+    .hero__photo img {animation:photo-arrive 1800ms cubic-bezier(.16,1,.3,1) both;}
+    .site-header {animation:header-arrive 900ms 120ms cubic-bezier(.16,1,.3,1) both;}
+    .hero h1 {animation:text-arrive 1100ms 240ms cubic-bezier(.16,1,.3,1) both;}
+    .hero__content p {animation:text-arrive 1100ms 400ms cubic-bezier(.16,1,.3,1) both;}
+    .hero__signature {animation:text-arrive 900ms 600ms cubic-bezier(.16,1,.3,1) both;}
+    .mobile-nav:not([hidden]) {animation:menu-arrive 600ms cubic-bezier(.16,1,.3,1) both;}
+    .info-dialog[open] {animation:dialog-arrive 350ms cubic-bezier(.16,1,.3,1) both;}
+  }
+  @media(prefers-reduced-motion:reduce) {.desktop-nav :is(button,a)::after,.menu-toggle span,.mobile-nav :is(button,a) {transition:none;}}
+  @keyframes photo-arrive {from {transform:translateY(-3rem) scale(1.18);}to {transform:translateY(-3rem) scale(1.12);}}
+  @keyframes header-arrive {from {opacity:0;transform:translateY(-1.5rem);}to {opacity:1;transform:translateY(0);}}
+  @keyframes text-arrive {from {opacity:0;transform:translateY(1.5rem);clip-path:inset(0 0 100%);}to {opacity:1;transform:translateY(0);clip-path:inset(0);}}
+  @keyframes menu-arrive {from {opacity:0;transform:translateY(-1rem) scale(.88);clip-path:inset(0 0 100% 30%);}to {opacity:1;transform:translateY(0) scale(1);clip-path:inset(0);}}
+  @keyframes dialog-arrive {from {opacity:0;transform:translateY(1rem) scale(.97);}to {opacity:1;transform:translateY(0) scale(1);}}
+.hero__photo picture {display:contents;}
+
+.hero__video {opacity:0;pointer-events:none;}
+.hero__video.is-playing {opacity:1;}
+.hero__photo video {position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;object-position:center;transform:translateY(-3rem) scale(1.12);}
+@media(prefers-reduced-motion:reduce) {.hero .hero__video {display:none!important;}}
+</style>

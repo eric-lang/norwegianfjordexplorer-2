@@ -1,0 +1,65 @@
+<section class="sustainability" id="sustainability" aria-labelledby="sustainability-heading">
+  <header class="sustainability__header">
+    <div data-reveal>
+      <p class="sustainability__label"><span aria-hidden="true"></span>Environment Friendly</p>
+      <h2 id="sustainability-heading">Travel Sustainable</h2>
+    </div>
+    <p class="sustainability__intro" data-reveal style="--reveal-delay:100ms">A different way to think about the resources along our coast. Discover how seaweed and fish-processing by-products can find a second life—from food and nutrition to alternative fuels.</p>
+  </header>
+  <div id="sustainability-film" class="sustainability__film" data-reveal>
+    <video class="sustainability__video" poster="/images/sustainable-video-poster.jpg" preload="none" playsinline muted aria-label="A scenic boat journey through the fjords of Lofoten" aria-describedby="sustainability-film-description">
+      <source src="/videos/lofoten-fjord.mp4" type="video/mp4" />
+      <a href="#sustainability-film">Watch the Lofoten fjord film</a>
+    </video>
+    <span class="sustainability__shade" aria-hidden="true"></span>
+    <button class="sustainability__play" type="button" aria-label="Play the Lofoten fjord film">
+      <svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M13 9.5c0-1.6 1.8-2.6 3.2-1.7l16 10.5a2 2 0 0 1 0 3.4l-16 10.5c-1.4.9-3.2-.1-3.2-1.7z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    </button>
+    <p class="sustainability__error" role="status" hidden>Unable to play the film. <a href="#sustainability-film">Return to the film</a>.</p>
+  </div>
+  <p id="sustainability-film-description" class="sr-only">Scenic footage of boats and the coastal landscape of Lofoten, filmed by Tobias Bjørkli. No spoken narration.</p>
+  <p class="sustainability__outro" data-reveal>Making more of what we already have is at the heart of this story. Join us aboard, meet the people behind the journey, and discover the connection between coastal ingredients, circular ideas, and the fjords we call home.</p>
+</section>
+<script>
+  const film=document.querySelector<HTMLElement>('.sustainability__film');
+  if(film) {
+    const video=film.querySelector<HTMLVideoElement>('video')!;
+    const play=film.querySelector<HTMLButtonElement>('.sustainability__play')!;
+    const error=film.querySelector<HTMLElement>('.sustainability__error')!;
+    const reset=()=>{film.classList.remove('is-playing');play.hidden=false;video.controls=false;};
+    const failed=()=>{reset();error.hidden=false;};
+    play.addEventListener('click',async()=>{
+      error.hidden=true;
+      video.controls=true;
+      try {await video.play();} catch {failed();}
+    });
+    video.addEventListener('play',()=>{film.classList.add('is-playing');play.hidden=true;video.controls=true;});
+    video.addEventListener('ended',reset);
+    video.addEventListener('error',failed);
+    new IntersectionObserver(entries=>{if(!entries[0].isIntersecting&&!video.paused)video.pause();},{threshold:0}).observe(film);
+  }
+</script>
+<style>
+  .sustainability {padding:5rem var(--page-gutter) 6rem;background:var(--paper);color:var(--navy);}
+  .sustainability__header,.sustainability__film,.sustainability__outro {max-width:90rem;margin-inline:auto;}
+  .sustainability__header {display:grid;grid-template-columns:1.1fr 1fr;gap:3rem;align-items:end;margin-bottom:2.75rem;}
+  .sustainability__label {display:flex;align-items:center;gap:.75rem;margin:0 0 1rem;color:var(--red);font:400 1.125rem/1.5 'IBM Plex Mono',monospace;text-transform:uppercase;}
+  .sustainability__label span {width:.5rem;height:.5rem;border-radius:50%;background:currentColor;flex:none;}
+  .sustainability h2 {margin:0;font:400 3.9375rem/1.11 var(--heading-font);color:#1e1e1e;}
+  .sustainability__intro,.sustainability__outro {font:400 1.125rem/1.65 var(--body-font);}
+  .sustainability__intro {margin:0;}
+  .sustainability__film {position:relative;aspect-ratio:1440/722.28;overflow:hidden;border-radius:1.125rem;background:var(--navy);}
+  .sustainability__video {display:block;width:100%;height:100%;object-fit:cover;}
+  .sustainability__shade {position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgb(0 0 0 / .08),rgb(0 0 0 / .3));transition:opacity 400ms;}
+  .sustainability__play {position:absolute;top:50%;left:50%;translate:-50% -50%;display:grid;place-items:center;width:5.625rem;height:5.625rem;padding:0;border:.0625rem solid var(--cream);border-radius:50%;background:rgb(255 250 231 / .18);color:var(--cream);cursor:pointer;backdrop-filter:blur(.25rem);transition:background 250ms,color 250ms,scale 350ms;}
+  .sustainability__play svg {width:2.4375rem;height:2.4375rem;}
+  .sustainability__play:is(:hover,:focus-visible) {background:var(--cream);color:var(--navy);scale:1.06;}
+  .sustainability__film.is-playing .sustainability__shade {opacity:0;}
+  .sustainability__outro {width:50%;max-width:45rem;margin:2.75rem 0 0 auto;}
+  .sustainability__error {position:absolute;bottom:1rem;left:1rem;right:1rem;margin:0;padding:.75rem;border-radius:.5rem;background:var(--cream);font:400 .875rem/1.5 var(--body-font);}
+  [hidden] {display:none!important;}
+  .sr-only {position:absolute;width:.0625rem;height:.0625rem;padding:0;margin:-.0625rem;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+  @media(max-width:68.75rem) {.sustainability h2 {font-size:3.25rem;color:#1e1e1e;}.sustainability__header {grid-template-columns:1fr;gap:1.5rem;}}
+  @media(max-width:40rem) {.sustainability {padding-top:3rem;padding-bottom:3rem;}.sustainability h2 {font-size:2.5rem;color:#1e1e1e;}.sustainability__label {font-size:.875rem;}.sustainability__intro,.sustainability__outro {font-size:1rem;}.sustainability__film {aspect-ratio:4/3;}.sustainability__play {width:4rem;height:4rem;}.sustainability__play svg {width:1.8125rem;height:1.8125rem;}.sustainability__outro {width:100%;margin-top:1.5rem;}}
+  @media(prefers-reduced-motion:reduce) {.sustainability__shade,.sustainability__play {transition:none;}}
+</style>

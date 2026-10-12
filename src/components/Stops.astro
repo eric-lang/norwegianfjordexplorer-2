@@ -1,0 +1,91 @@
+---
+import { stops } from '../data/stops';
+import ActionButton from './ActionButton.astro';
+---
+<section class="sail" id="stops" aria-labelledby="sail-heading">
+  <header class="sail__heading">
+    <p class="sail__eyebrow">Discover the coast</p>
+    <h2 id="sail-heading">Come Sail With Us</h2>
+    <p>From our harbour to the city's hidden corners, discover the places and people that make an Arctic journey your own.</p>
+  </header>
+  <div class="sail__grid">
+    {stops.map((stop,i) => <article class:list={['sail-card',{'sail-card--wide':i===4}]}>
+      <div class="sail-card__photo"><img src={`/images/${stop.image}.webp`} alt={stop.alt} loading="lazy" width="1000" height="720" /><span aria-hidden="true">0{i+1} ↗</span></div>
+      <div class="sail-card__body">
+        <p class="sail-card__label">{i===0?'Your starting point':i===4?'A local perspective':'Explore ashore'}</p>
+        <h3>{stop.title}</h3>
+        <p>{stop.paragraphs[0]}</p>
+        <ActionButton class="sail-card__more" label="Discover more" aria-expanded="false" aria-controls={`sail-detail-${stop.id}`} />
+      </div>
+      <div class="sail-card__detail" id={`sail-detail-${stop.id}`} role="region" aria-label={`${stop.title} details`} hidden>
+        <button class="sail-card__close" type="button" aria-label="Close details">×</button>
+        <p class="sail-card__label">Discover · Stop 0{i+1}</p>
+        <h3>{stop.title}</h3>
+        {stop.paragraphs.map(text=><p>{text}</p>)}
+        <a href="#panel-booking" data-open-panel="booking" data-experience-title={stop.title} data-experience-summary={stop.paragraphs[0]}><span class="theme-action"><span class="theme-action__circle theme-action__circle--left" aria-hidden="true">↗</span><span class="theme-action__label">Talk with the crew</span><span class="theme-action__circle theme-action__circle--right" aria-hidden="true">↗</span></span></a>
+      </div>
+    </article>)}
+  </div>
+</section>
+<script>
+  const cards = [...document.querySelectorAll<HTMLElement>('.sail-card')];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const animations = new Map<HTMLElement,Animation>();
+  function toggle(card:HTMLElement,open:boolean,restore=false) {
+    const pane=card.querySelector<HTMLElement>('.sail-card__detail')!;
+    const button=card.querySelector<HTMLButtonElement>('.sail-card__more')!;
+    const current=getComputedStyle(pane).clipPath;
+    animations.get(card)?.cancel();
+    pane.hidden=false; pane.inert=!open;
+    button.setAttribute('aria-expanded',String(open));
+    card.classList.toggle('is-open',open);
+    if(open) pane.querySelector<HTMLButtonElement>('button')!.focus({preventScroll:true});
+    else if(restore) button.focus({preventScroll:true});
+    const end=open?'inset(0 0 0 0)':'inset(0 0 0 100%)';
+    if(reduced.matches){pane.hidden=!open;return;}
+    const animation=pane.animate([{clipPath:current==='none'?'inset(0 0 0 100%)':current},{clipPath:end}],{duration:600,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'});
+    animations.set(card,animation);
+    animation.finished.then(()=>{if(animations.get(card)!==animation)return;pane.hidden=!open;animation.cancel();animations.delete(card);}).catch(()=>{});
+  }
+  cards.forEach(card=>{
+    card.querySelector('.sail-card__more')!.addEventListener('click',()=>{cards.filter(c=>c!==card&&c.classList.contains('is-open')).forEach(c=>toggle(c,false));toggle(card,true);});
+    card.querySelector('.sail-card__close')!.addEventListener('click',()=>toggle(card,false,true));
+    card.addEventListener('keydown',e=>{if(e.key==='Escape'&&card.classList.contains('is-open'))toggle(card,false,true);});
+  });
+  document.addEventListener('pointerdown',e=>{cards.filter(c=>c.classList.contains('is-open')&&!c.contains(e.target as Node)).forEach(c=>toggle(c,false));});
+</script>
+<style>
+  .sail {padding:6rem var(--page-gutter);background:var(--paper);color:var(--navy);}
+  .sail__heading {position:relative;padding:1.5rem 0 2rem;background:var(--paper);max-width:90rem;margin:auto;}
+  .sail__eyebrow {color:var(--red);font:400 1.125rem/1.5 'IBM Plex Mono',monospace;text-transform:uppercase;}
+  .sail h2 {font:400 3.9375rem/1.11 var(--heading-font);margin:.75rem 0 1rem;color:#1e1e1e;}
+  .sail__heading>p:last-child {max-width:42rem;font:400 1.125rem/1.6 var(--body-font);margin:0;}
+  .sail__grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.125rem;max-width:90rem;margin:1.5rem auto 0;}
+  .sail-card {position:relative;isolation:isolate;min-width:0;overflow:hidden;border-radius:1.125rem;background:#fff;}
+  .sail-card__photo {position:relative;overflow:hidden;margin:.9375rem .9375rem 0;border-radius:.625rem;aspect-ratio:1.55;}
+  .sail-card__photo img {width:100%;height:100%;object-fit:cover;transform:scale(1.065);transition:transform 850ms cubic-bezier(.22,1,.36,1),filter 600ms;}
+  .sail-card:hover img {transform:scale(1);filter:brightness(.9);}
+  .sail-card__photo>span {position:absolute;right:1rem;top:1rem;background:var(--paper);padding:.625rem .875rem;border-radius:2rem;font:400 .875rem/1 'IBM Plex Mono',monospace;}
+  .sail-card__body {padding:1.6875rem;}
+  .sail-card__label {font:400 1rem/1.5 var(--body-font);color:var(--red);margin:0 0 .75rem;}
+  .sail-card h3 {font:400 1.96875rem/1.2 var(--heading-font);margin:0 0 1rem;}
+  .sail-card__body>p:not(.sail-card__label),.sail-card__detail>p:not(.sail-card__label) {font:400 1rem/1.65 var(--body-font);}
+  .sail-card__detail>a {display:inline-flex;gap:1.5rem;align-items:center;padding:.75rem 0;border:0;background:none;color:var(--navy);font:600 1rem/1.5 var(--body-font);text-decoration:underline;text-underline-offset:.3rem;cursor:pointer;}
+  .sail-card__detail>a:hover {color:var(--red);}
+  .sail-card--wide {grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;align-items:stretch;}
+  .sail-card--wide .sail-card__photo {margin:.9375rem;aspect-ratio:auto;min-height:25rem;}
+  .sail-card--wide .sail-card__photo img {position:absolute;inset:0;object-position:center top;}
+  .sail-card__detail {position:absolute;inset:0;z-index:2;background:var(--cream);padding:2rem;overflow:auto;clip-path:inset(0 0 0 100%);}
+  .sail-card__detail[hidden] {display:none;}
+  .is-open .sail-card__detail {clip-path:inset(0);}
+  .sail-card__detail h3 {padding-right:2rem;}
+  .sail-card__close {position:absolute;top:1rem;right:1rem;border:0;border-radius:50%;width:2rem;height:2rem;color:var(--cream);background:var(--navy);font-size:1.5rem;cursor:pointer;}
+  @media(min-width:68.751rem) {.sail__heading {padding-bottom:1.5rem;} }
+  @media(max-width:68.75rem) {.sail h2 {font-size:3.25rem;color:#1e1e1e;} }
+  @media(max-width:40rem) {.sail {padding-top:3rem;padding-bottom:3rem;}.sail__heading {position:relative;padding-top:0;}.sail h2 {font-size:2.5rem;color:#1e1e1e;}.sail__grid {grid-template-columns:1fr;}.sail-card--wide {display:block;}.sail-card__body,.sail-card__detail {padding:1.5rem;}.sail-card h3 {font-size:1.75rem;} }
+  @media(prefers-reduced-motion:reduce) {.sail-card__photo img {transition:none;transform:none;} }
+.sail-card h3 {color:#1e1e1e;}
+.sail-card :global(.booking-button:is(:hover,:focus-visible)) {color:var(--cream);}
+.sail-card :global(.booking-button:is(:hover,:focus-visible) .booking-button__label),.sail-card :global(.booking-button:is(:hover,:focus-visible) .booking-button__circle) {background:var(--navy);}
+</style>
+

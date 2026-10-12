@@ -1,0 +1,108 @@
+---
+const decks=[
+  {name:'Deck 1',alt:'Retro cabin with wooden berths and a sofa',facilities:['Six double retro-style berths, two with a sink','Storage for clean towels and bed linens','Two toilets and two showers']},
+  {name:'Deck 1B',alt:'Wooden bunk beds and a chair in a single cabin',facilities:['Four single berths, all with a sink and bunk']},
+  {name:'Deck 2',alt:'Bright cabin with wooden bunks and round portholes',facilities:['Bathroom, two showers and two toilets','Reception with games and toys','Fully equipped galley','Dining / conference room for 50 guests','Small, cosy outdoor deck','One triple cabin']},
+  {name:'Deck 2B',alt:'The cosy King Crab Saloon with red seating and wooden tables',facilities:['The King Crab Saloon']},
+  {name:'Deck 3',alt:'Cabin with green curtains, bunks and a small seating area',facilities:['Two single and two double cabins','Northern Lights bar and observation deck for 30']},
+  {name:'Deck 4',alt:'An onboard buffet with dishes laid out for guests',facilities:['Top deck with barbecue / grill']},
+];
+---
+<section class="deck-plans" id="deck-plans" aria-labelledby="deck-plans-heading">
+  <header class="deck-plans__header" data-reveal>
+    <p class="deck-plans__label"><span aria-hidden="true"></span>The Vessel</p>
+    <div class="deck-plans__introduction"><h2 id="deck-plans-heading">Deck Plan for My<br />Fjord Visjon</h2><ul class="deck-plans__capacity"><li>15 Cabins</li><li>24 Beds</li><li>70 Guests / Passengers</li></ul></div>
+  </header>
+  <div class="deck-plans__grid">
+    {decks.map((deck,index)=><article class:list={['deck-card',{'deck-card--reverse':index%2===1}]} data-reveal style={`--reveal-delay:${index%2*100}ms`}>
+      <div class="deck-card__photo">
+        <img src={`/images/deck-photo-${index+1}.webp`} alt={deck.alt} width="1000" height="1000" loading="lazy" />
+        <span class="deck-card__shade" aria-hidden="true"></span>
+        <header><p><span aria-hidden="true"></span>Fjord Visjon</p><h3>{deck.name}</h3></header>
+        <ul class="deck-card__facilities">{deck.facilities.map(facility=><li>{facility}</li>)}</ul>
+      </div>
+      <button type="button" class="deck-card__plan" data-deck-name={deck.name} data-plan-src={`/images/deck-plan-${index+1}.webp`} aria-label={`Enlarge ${deck.name} plan`}>
+        <img src={`/images/deck-plan-${index+1}.webp`} alt={`${deck.name} layout from the vessel's deck drawing`} width="504" height="1232" loading="lazy" />
+        <span aria-hidden="true">↗</span>
+      </button>
+    </article>)}
+  </div>
+  <dialog class="deck-plan-dialog" aria-labelledby="deck-plan-dialog-title">
+    <header><h3 id="deck-plan-dialog-title">Deck plan</h3><button type="button" aria-label="Close enlarged deck plan">×</button></header>
+    <img alt="" width="504" height="1232" />
+  </dialog>
+</section>
+<script>
+  const section=document.querySelector<HTMLElement>('.deck-plans');
+  const dialog=section?.querySelector<HTMLDialogElement>('dialog');
+  if(section&&dialog) {
+    const title=dialog.querySelector<HTMLElement>('h3')!;
+    const image=dialog.querySelector<HTMLImageElement>('img')!;
+    section.querySelectorAll<HTMLButtonElement>('.deck-card__plan').forEach(button=>button.addEventListener('click',()=>{
+      title.textContent=`${button.dataset.deckName} — Layout`;
+      image.src=button.dataset.planSrc!;
+      image.alt=`Enlarged ${button.dataset.deckName} plan`;
+      dialog.showModal();
+    }));
+    dialog.querySelector('button')!.addEventListener('click',()=>dialog.close());
+    dialog.addEventListener('click',event=>{if(event.target===dialog){const bounds=dialog.getBoundingClientRect();if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)dialog.close();}});
+  }
+</script>
+<style>
+  .deck-plans {padding:4rem var(--page-gutter) 6rem;background:var(--paper);color:var(--navy);}
+  .deck-plans__header {margin-bottom:4rem;}
+  .deck-plans__label {display:flex;align-items:center;gap:0.75rem;margin:0 0 1rem;padding-bottom:1rem;border-bottom:0.0625rem solid rgb(27 54 97 / .2);font:500 1.125rem/1.5 var(--body-font);}
+  .deck-plans__label span {width:0.625rem;height:0.625rem;background:var(--red);}
+  .deck-plans__introduction {display:flex;justify-content:space-between;align-items:flex-end;gap:2rem;}
+  .deck-plans h2 {margin:0;color:#1e1e1e;font:400 3.9375rem/1.11 var(--heading-font);letter-spacing:-.045em;}
+  .deck-plans__capacity {list-style:none;padding:0;margin:0;text-align:right;font:700 1.125rem/1.5 var(--body-font);}
+  .deck-plans__capacity li+li {margin-top:0.625rem;}
+  .deck-plans__grid {display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  .deck-card {display:grid;grid-template-columns:444fr 252fr;height:38.5rem;overflow:hidden;border-radius:1.125rem;min-width:0;}
+
+
+  .deck-card__photo {position:relative;overflow:hidden;min-width:0;}
+  .deck-card__photo>img {display:block;width:100%;height:100%;object-fit:cover;transform:scale(1.035);transition:transform 800ms cubic-bezier(.22,1,.36,1),filter 600ms;}
+  .deck-card:is(:hover,:focus-within) .deck-card__photo>img {transform:scale(1);filter:brightness(.9);}
+  .deck-card__shade {position:absolute;inset:0;background:linear-gradient(180deg,rgb(0 0 0 / .3),transparent 40%,rgb(0 0 0 / .4));}
+  .deck-card__photo header {position:absolute;top:1rem;left:2rem;right:1rem;}
+  .deck-card__photo header p {display:flex;align-items:center;gap:0.375rem;margin:0 0 0.5rem;color:var(--red);font:400 0.875rem/1.5 var(--body-font);text-transform:uppercase;}
+  .deck-card__photo header p span {width:0.625rem;height:0.625rem;flex:none;border-radius:50%;background:#fff;}
+  .deck-card h3 {margin:0;color:#fff;font:400 2.5rem/1.2 var(--heading-font);letter-spacing:-.045em;}
+  .deck-card__facilities {position:absolute;bottom:0.625rem;left:0.625rem;right:0.625rem;margin:0;padding:0.75rem 0.875rem 0.75rem 2rem;background:var(--cream);color:var(--navy);font:700 0.875rem/1.5 var(--body-font);border-radius:0.125rem;}
+  .deck-card__facilities li+li {margin-top:0.5rem;}
+  .deck-card__plan {position:relative;min-width:0;border:0;padding:0;background:#fff;cursor:zoom-in;overflow:hidden;}
+  .deck-card__plan img {display:block;width:100%;height:100%;object-fit:contain;}
+  .deck-card__plan>span {position:absolute;bottom:0.75rem;right:0.75rem;background:var(--cream);color:var(--navy);border-radius:50%;width:2rem;height:2rem;display:grid;place-items:center;opacity:0;transition:opacity 250ms;}
+  .deck-card__plan:is(:hover,:focus-visible)>span {opacity:1;}
+  .deck-plan-dialog {width:min(33.75rem,calc(100% - 2rem));max-height:90svh;padding:1rem;border:0;border-radius:0.5rem;background:#fff;color:var(--navy);}
+  .deck-plan-dialog::backdrop {background:rgb(0 0 0 / .7);backdrop-filter:blur(0.25rem);}
+  .deck-plan-dialog header {display:flex;justify-content:space-between;align-items:center;gap:1rem;}
+  .deck-plan-dialog h3 {margin:0;font-size:1.25rem;}
+  .deck-plan-dialog button {width:2.5rem;height:2.5rem;border:0;border-radius:50%;background:var(--cream);color:var(--navy);font-size:1.75rem;cursor:pointer;}
+  .deck-plan-dialog>img {display:block;width:100%;height:auto;}
+  @media(max-width:62.5rem) and (min-width:47.5625rem) {.deck-card__photo header {left:1rem;}.deck-card__facilities {font-size:0.75rem;padding-left:1.5rem;}.deck-card h3 {font-size:2rem;}}
+  @media(max-width:47.5rem) {.deck-plans {padding:4rem var(--page-gutter) 6rem;}.deck-plans__header {margin-bottom:2.25rem;}.deck-plans__label {font-size:0.875rem;}.deck-plans__introduction {align-items:flex-start;flex-direction:column;gap:1.5rem;}.deck-plans__capacity {text-align:left;font-size:1rem;}.deck-plans__grid {grid-template-columns:1fr;gap:0.75rem;}.deck-card {height:35rem;}.deck-card__photo header {left:1rem;}.deck-card h3 {font-size:1.875rem;}.deck-card__photo header p {font-size:0.6875rem;}.deck-card__facilities {left:0.5rem;right:0.5rem;bottom:0.5rem;padding:0.625rem 0.5rem 0.625rem 1.5rem;font-size:0.75rem;}.deck-card__facilities li+li {margin-top:0.375rem;}}
+  @media(prefers-reduced-motion:reduce) {.deck-card__photo>img,.deck-card__plan>span {transition:none;}}
+
+.deck-plans__header,.deck-plans__grid {max-width:90rem;margin-inline:auto;}
+.deck-plans__label {font:400 1.125rem/1.5 'IBM Plex Mono',monospace;text-transform:uppercase;color:var(--red);border:0;}
+.deck-plans__label span {border-radius:50%;width:.5rem;height:.5rem;}
+.deck-card__photo header p {color:var(--cream);font-family:'IBM Plex Mono',monospace;}
+.deck-card__shade {background:linear-gradient(180deg,rgb(0 0 0 / .6),transparent 50%,rgb(0 0 0 / .35));}
+.deck-card__facilities {border-radius:.5625rem;background:#fffdf7;}
+.deck-plan-dialog h3 {color:#1e1e1e;font:400 1.5rem/1.2 var(--heading-font);}
+@media(max-width:68.75rem) {.deck-plans h2 {font-size:3.25rem;}}
+@media(max-width:40rem) {.deck-plans h2 {font-size:2.5rem;}.deck-plans__label {font-size:.875rem;}.deck-card {height:32rem;}}
+
+.deck-card__facilities {opacity:0;transform:translateY(.75rem);transition:opacity 350ms,transform 450ms cubic-bezier(.22,1,.36,1);pointer-events:none;}
+.deck-card:is(:hover,:focus-within) .deck-card__facilities {opacity:1;transform:none;}
+@media(max-width:47.5rem),(hover:none) {.deck-card__facilities {opacity:1;transform:none;pointer-events:auto;}}
+@media(max-width:40rem) {.deck-plans {padding-top:3rem;padding-bottom:3rem;}}
+@media(prefers-reduced-motion:reduce) {.deck-card__facilities {transition:none;}}
+
+@media(min-width:47.5001rem) {
+  .deck-card--reverse {grid-template-columns:252fr 444fr;}
+  .deck-card--reverse .deck-card__plan {grid-column:1;grid-row:1;}
+}
+</style>

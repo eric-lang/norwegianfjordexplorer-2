@@ -1,0 +1,192 @@
+---
+import BookingButton from './BookingButton.astro';
+import { routeStops } from '../data/route-stops';
+import 'leaflet/dist/leaflet.css';
+const initial=routeStops.find(stop=>stop.id==='narvik')!;
+---
+<section class="routes" id="routes" aria-labelledby="routes-heading">
+  <div class="routes__stage" data-reveal>
+    <div class="route-map__canvas" id="cruise-map" role="region" aria-label="Satellite map of the Northern Norway cruise locations"></div>
+    <div class="routes__shade" aria-hidden="true"></div>
+    <header class="routes__header"><p>Explore the Arctic coast</p><BookingButton variant="red" label="Plan your route" /></header>
+    <div class="routes__intro">
+      <p class="routes__eyebrow">Tromsø · Lofoten · Vesterålen</p>
+      <h2 id="routes-heading">There’s a Fjord<br />in Your Future</h2>
+      <p class="routes__copy">Sail and stay a few hours or some days onboard the world’s smallest cruise vessel.</p>
+      <p class="routes__details">King crab expeditions. Lunch and dinner cruises. Ski and cycle adventures. Northern Lights and Midnight Sun. Explore Lofoten, Vesterålen, Senja and the Lyngen Alps, with polar histories and Arctic experiences along the way.</p>
+    </div>
+    <div class="route-map__tools" aria-label="Map controls"><button type="button" data-map-zoom="in" aria-label="Zoom in on the cruise map">+</button><button type="button" data-map-zoom="out" aria-label="Zoom out on the cruise map">−</button><button type="button" data-map-fit aria-label="Show all cruise locations">↺</button></div>
+    <div class="route-map__popup" id="route-stop-details" data-city-photo="narvik" role="dialog" aria-modal="false" aria-labelledby="route-stop-title">
+      <button class="route-map__close" type="button" aria-label="Close location details">×</button>
+      <h3 id="route-stop-title">{initial.name}</h3>
+      <p class="route-map__story" data-stop-story>{initial.story}</p>
+      <a href="#panel-booking" data-open-panel="booking" data-experience-title={`Cruise through ${initial.name}`} data-experience-summary={initial.region} data-route-enquiry><span class="theme-action"><span class="theme-action__circle theme-action__circle--left" aria-hidden="true">↗</span><span class="theme-action__label">Plan a cruise here</span><span class="theme-action__circle theme-action__circle--right" aria-hidden="true">↗</span></span></a>
+    </div>
+    <p class="route-map__status" role="status" hidden>Loading the coastal map…</p>
+  </div>
+  <div class="routes__footer">
+    <label>Explore a stop <select aria-label="Explore a route stop">{routeStops.map(stop=><option value={stop.id} selected={stop.id===initial.id}>{stop.name}</option>)}</select></label>
+    <button class="routes__overlay-toggle" type="button" data-toggle-routes aria-pressed="true"><span aria-hidden="true"></span>Route sketch</button>
+    <p>Explore the stops. Shape your journey with the crew.</p>
+    <small class="routes__credit">Imagery: Esri, Vantor, Earthstar Geographics, GIS User Community · Locations: Kartverket</small>
+  </div>
+</section>
+<script>
+  import * as L from 'leaflet';
+  import { routeStops } from '../data/route-stops';
+  import { routeCoordinates } from '../data/route-coordinates';
+  import { satelliteBounds } from '../data/satellite-bounds';
+  const section=document.querySelector<HTMLElement>('#routes');
+  const canvas=section?.querySelector<HTMLElement>('#cruise-map');
+  const popup=section?.querySelector<HTMLElement>('.route-map__popup');
+  if(section&&canvas&&popup) {
+    const motion=matchMedia('(prefers-reduced-motion:reduce)');
+    const unit=()=>Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const map=L.map(canvas,{zoomControl:false,scrollWheelZoom:false,zoomSnap:.1,zoomDelta:.75,minZoom:4,maxZoom:10,attributionControl:false,fadeAnimation:!motion.matches,zoomAnimation:!motion.matches}).setView([69,17],6);
+    L.imageOverlay('/images/northern-norway-satellite-wide.jpg',[[...satelliteBounds[0]],[...satelliteBounds[1]]],{attribution:'Imagery: Esri, Vantor, Earthstar Geographics, GIS User Community',className:'route-satellite'}).addTo(map);
+    const bounds=L.latLngBounds(routeStops.map(stop=>{const p=routeCoordinates[stop.id];return [p.lat,p.lng] as L.LatLngTuple;}));
+    const routeLayer=L.layerGroup().addTo(map);
+    const connections=new Set<string>();
+    routeStops.forEach(stop=>{
+      const pair=[stop.id,stop.nearby].sort().join(':');if(connections.has(pair))return;connections.add(pair);
+      const a=routeCoordinates[stop.id],b=routeCoordinates[stop.nearby];
+      L.polyline([[a.lat,a.lng],[b.lat,b.lng]],{color:'#fffae7',weight:unit()*.125,opacity:.75,dashArray:'5 7',interactive:false,className:'route-sketch-line'}).addTo(routeLayer);
+    });
+    const markers=new Map<string,L.Marker>();
+    let active:(typeof routeStops)[number]=routeStops.find(stop=>stop.id==='narvik')!,opened=true;
+    let popupAnimation:Animation|undefined;
+    const select=section.querySelector<HTMLSelectElement>('select')!;
+    function fit() {
+      const desktop=canvas!.clientWidth>unit()*47.5;
+      map.fitBounds(bounds,{paddingTopLeft:[desktop?canvas!.clientWidth*.43:unit()*2,unit()*6],paddingBottomRight:[unit()*3,unit()*3],animate:false});
+    }
+    function positionPopup() {
+      if(!opened)return;
+      const p=routeCoordinates[active.id],point=map.latLngToContainerPoint([p.lat,p.lng]);
+      const u=unit(),gap=.875*u,w=popup!.offsetWidth,h=popup!.offsetHeight;
+      const left=Math.max(gap,Math.min(point.x-w/2,canvas!.clientWidth-w-gap));
+      const above=point.y>=h+u*1.875;
+      const top=Math.max(gap,Math.min(above?point.y-h-u:point.y+u,canvas!.clientHeight-h-gap));
+      popup!.style.left=`${(left+canvas!.offsetLeft)/u}rem`;popup!.style.top=`${(top+canvas!.offsetTop)/u}rem`;
+      popup!.dataset.placement=above?'above':'below';
+      popup!.style.setProperty('--arrow-left',`${Math.max(u,Math.min(point.x-left,w-u))/u}rem`);
+      popup!.style.visibility=map.getBounds().contains([p.lat,p.lng])?'visible':'hidden';
+    }
+    function animatePopup(show:boolean) {
+      popupAnimation?.cancel();
+      if(motion.matches){popup!.hidden=!show;return;}
+      if(show) {
+        popup!.hidden=false;
+        popupAnimation=popup!.animate([{opacity:0,transform:'scale(.1)'},{opacity:1,transform:'scale(1)'}],{duration:450,easing:'cubic-bezier(.16,1,.3,1)'});
+      } else {
+        const current=getComputedStyle(popup!);
+        popupAnimation=popup!.animate([{opacity:current.opacity,transform:current.transform},{opacity:0,transform:'scale(.1)'}],{duration:260,easing:'cubic-bezier(.55,0,1,.45)'});
+        popupAnimation.finished.then(()=>{if(!opened)popup!.hidden=true;}).catch(()=>{});
+      }
+    }
+    function choose(id:string,pan=true) {
+      const stop=routeStops.find(stop=>stop.id===id);if(!stop)return;
+      active=stop;opened=true;popup!.hidden=false;
+      popup!.dataset.cityPhoto=stop.id;
+      const loc=routeCoordinates[stop.id];
+      const merc=(lat:number)=>Math.log(Math.tan(Math.PI/4+lat*Math.PI/360));
+      const x=(loc.lng-satelliteBounds[0][1])/(satelliteBounds[1][1]-satelliteBounds[0][1])*100;
+      const y=(merc(satelliteBounds[1][0])-merc(loc.lat))/(merc(satelliteBounds[1][0])-merc(satelliteBounds[0][0]))*100;
+      popup!.style.setProperty('--place-position',x+'% '+y+'%');
+      popup!.querySelector('#route-stop-title')!.textContent=stop.name;
+      popup!.querySelector('[data-stop-story]')!.textContent=stop.story;
+      const enquiry=popup!.querySelector<HTMLElement>('[data-route-enquiry]')!;
+      enquiry.dataset.experienceTitle=`Cruise through ${stop.name}`;enquiry.dataset.experienceSummary=stop.region;
+      select.value=id;
+      markers.forEach((marker,key)=>{const el=marker.getElement();el?.setAttribute('aria-expanded',String(key===id));marker.setZIndexOffset(key===id?1000:0);});
+      const coord=routeCoordinates[id as keyof typeof routeCoordinates];
+      if(pan&&!map.getBounds().contains([coord.lat,coord.lng]))map.panTo([coord.lat,coord.lng],{animate:false});
+      const u=unit(),w=popup!.offsetWidth,h=popup!.offsetHeight;
+      const leftMargin=canvas!.clientWidth>47.5*u ? canvas!.clientWidth*.43+w/2+u*.5 : w/2+u*.5;
+      map.panInside([coord.lat,coord.lng],{paddingTopLeft:[leftMargin,h+2*u],paddingBottomRight:[w/2+u*.5,2*u],animate:false});
+      positionPopup();animatePopup(true);
+    }
+    routeStops.forEach(stop=>{
+      const p=routeCoordinates[stop.id],size=unit()*1.5;
+      const marker=L.marker([p.lat,p.lng],{keyboard:true,title:stop.name,icon:L.divIcon({className:'route-pin',html:'<span class="route-pin__dot" aria-hidden="true"></span>',iconSize:[size,size],iconAnchor:[size/2,size/2]})}).addTo(map);
+      const el=marker.getElement()!;el.setAttribute('role','button');el.setAttribute('aria-label',`Explore ${stop.name}`);el.setAttribute('aria-controls','route-stop-details');el.setAttribute('data-stop',stop.id);el.setAttribute('data-lat',String(p.lat));el.setAttribute('data-lng',String(p.lng));
+      el.addEventListener('keydown',event=>{if(event.key===' '){event.preventDefault();choose(stop.id);}});
+      marker.on('click',()=>choose(stop.id));
+      marker.bindTooltip(stop.name,{permanent:['tromso','narvik','svolvaer','skjervoy'].includes(stop.id),direction:'right',offset:[unit()*.5,0],className:'route-place-label'});
+      markers.set(stop.id,marker);
+    });
+    select.addEventListener('change',()=>choose(select.value));
+    popup.querySelector('.route-map__close')!.addEventListener('click',()=>{opened=false;markers.get(active.id)?.getElement()?.setAttribute('aria-expanded','false');animatePopup(false);markers.get(active.id)?.getElement()?.focus({preventScroll:true});});
+    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&opened&&section.contains(document.activeElement)){opened=false;animatePopup(false);markers.get(active.id)?.getElement()?.setAttribute('aria-expanded','false');markers.get(active.id)?.getElement()?.focus({preventScroll:true});}});
+    section.querySelector('[data-map-zoom="in"]')!.addEventListener('click',()=>map.zoomIn());
+    section.querySelector('[data-map-zoom="out"]')!.addEventListener('click',()=>map.zoomOut());
+    section.querySelector('[data-map-fit]')!.addEventListener('click',()=>{opened=false;markers.get(active.id)?.getElement()?.setAttribute('aria-expanded','false');animatePopup(false);fit();});
+    const overlayToggle=section.querySelector<HTMLButtonElement>('[data-toggle-routes]')!;
+    overlayToggle.addEventListener('click',()=>{const on=overlayToggle.getAttribute('aria-pressed')!=='true';overlayToggle.setAttribute('aria-pressed',String(on));if(on)routeLayer.addTo(map);else map.removeLayer(routeLayer);});
+    map.on('move zoom resize',positionPopup);
+    new ResizeObserver(()=>{map.invalidateSize({pan:false});fit();if(opened)choose(active.id,false);else positionPopup();}).observe(canvas);
+    fit();choose('narvik',false);
+    document.fonts.ready.then(()=>{if(opened)choose(active.id,false);});
+    new ResizeObserver(()=>{if(opened)positionPopup();}).observe(section.querySelector<HTMLElement>('.routes__stage')!);
+    canvas.dataset.ready='true';
+  }
+</script>
+<style>
+  .routes {max-width:103.125rem;margin-inline:auto;padding:0 var(--page-gutter) 6.75rem;scroll-margin-top:1.5rem;}
+  .routes__stage {position:relative;isolation:isolate;min-height:45.15rem;overflow:hidden;border-radius:1.125rem;background:#14313c;}
+  .route-map__canvas {position:absolute;inset:0;z-index:0;background:#14313c;}
+  .routes__shade {position:absolute;z-index:1;inset:0;pointer-events:none;background:linear-gradient(90deg,rgb(1 15 24 / .88),rgb(1 15 24 / .52) 36%,transparent 65%),linear-gradient(180deg,rgb(1 15 24 / .45),transparent 25%);}
+  .routes__header {position:absolute;top:2.25rem;left:4.5rem;right:2.8125rem;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:1rem;color:white;}
+  .routes__header>p {margin:0;font:400 1rem/1.5 "IBM Plex Mono",monospace;}
+  .routes__intro {position:absolute;z-index:2;left:4.5rem;bottom:4.5rem;width:38%;max-width:34rem;color:white;pointer-events:none;}
+  .routes__eyebrow {margin:0 0 1.5rem;color:var(--cream);font:400 .75rem/1.5 "IBM Plex Mono",monospace;}
+  .routes h2 {margin:0 0 1.75rem;font:400 3.9375rem/1.11 var(--heading-font);letter-spacing:-.02em;text-wrap:balance;color:var(--cream);}
+  .routes__copy {margin:0 0 1rem;font:400 1.125rem/1.5 var(--body-font);}
+  .routes__details {margin:0;max-width:29rem;color:var(--cream);font:400 .9375rem/1.5 var(--body-font);}
+  .route-map__tools {position:absolute;right:1.5rem;top:7rem;z-index:6;display:grid;gap:.375rem;}
+  .route-map__tools button {display:grid;place-items:center;width:2.5rem;height:2.5rem;border:0;border-radius:.5rem;background:var(--cream);color:var(--navy);font:400 1.5rem/1 var(--body-font);transition:background 250ms,color 250ms;}
+  .route-map__tools button:hover {background:var(--navy);color:var(--cream);}
+  .route-map__popup {position:absolute;z-index:7;left:55%;top:25%;width:min(19rem,calc(100% - 1.75rem));padding:1.375rem;border-radius:.75rem;background:var(--paper);color:var(--navy);box-shadow:0 .875rem 2.25rem rgb(0 0 0 / .25);transform-origin:var(--arrow-left,50%) 100%;}
+  .route-map__popup[hidden] {display:none;}
+  .route-map__popup::after {content:'';position:absolute;left:var(--arrow-left,50%);bottom:-.5rem;width:1rem;height:1rem;translate:-50% 0;rotate:45deg;background:var(--paper);}
+  .route-map__popup[data-placement='below'] {transform-origin:var(--arrow-left,50%) 0;}
+  .route-map__popup[data-placement='below']::after {bottom:auto;top:-.5rem;}
+  .route-map__close {position:absolute;right:.375rem;top:.375rem;width:2rem;height:2rem;border:0;border-radius:50%;background:none;color:var(--navy);font-size:1.5rem;}
+  .route-map__region {margin:0 1rem .625rem 0;color:var(--red);font:400 .625rem/1.4 "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.04em;}
+  .route-map__popup h3 {margin:0 0 .75rem;font:400 1.96875rem/1.1 var(--heading-font);}
+  .route-map__story {margin:0 0 1rem;font:400 .875rem/1.5 var(--body-font);}
+  .route-map__popup>a {font:600 .8125rem/1.5 var(--body-font);text-underline-offset:.25rem;}
+  .route-map__nearby {display:block;margin:1rem 0 0;padding:.75rem 1rem .75rem 0;border:0;border-top:.0625rem solid rgb(27 54 97 / .15);background:none;color:var(--navy);text-align:left;font:400 .8125rem/1.5 var(--body-font);}
+  .route-map__status {position:absolute;z-index:8;bottom:1.5rem;left:1.5rem;padding:.75rem;background:var(--cream);color:var(--navy);}
+  .routes__footer {display:flex;align-items:center;flex-wrap:wrap;gap:1rem 1.5rem;padding-top:1.25rem;font:400 .8125rem/1.5 var(--body-font);}
+  .routes__footer label {display:flex;align-items:center;gap:.75rem;}
+  .routes__footer select {max-width:12rem;min-height:2.75rem;border:.0625rem solid rgb(27 54 97 / .2);border-radius:.5rem;appearance:none;padding:.5rem 3.5rem .5rem .75rem;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%231b3661' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:1rem;background-position:right 1rem center;background-color:var(--paper);color:var(--navy);font:500 .875rem/1.5 var(--body-font);}
+  .routes__footer>p {margin:0 0 0 auto;color:rgb(27 54 97 / .8);}
+  .routes__credit {flex-basis:100%;color:rgb(27 54 97 / .8);font:400 .625rem/1.5 var(--body-font);}
+  .routes__overlay-toggle {display:flex;align-items:center;gap:.625rem;min-height:2.75rem;padding:0;border:0;background:none;color:var(--navy);font:400 .8125rem/1.5 var(--body-font);}
+  .routes__overlay-toggle span {width:1.5rem;height:.125rem;background:var(--navy);opacity:.25;}
+  .routes__overlay-toggle[aria-pressed='true'] span {opacity:1;}
+  .routes :global(.route-pin) {border:0;background:none;}
+  .routes :global(.route-pin__dot) {display:block;width:.875rem;height:.875rem;margin:.3125rem;border:.125rem solid var(--cream);border-radius:50%;background:var(--red);box-shadow:0 0 0 .375rem rgb(255 250 231 / .2);animation:marker-pulse 2200ms ease-in-out infinite;}
+  .routes :global(.route-pin[aria-expanded='true'] .route-pin__dot) {background:var(--cream);border-color:var(--red);box-shadow:0 0 0 .5rem rgb(218 27 27 / .3);}
+  .routes :global(.route-place-label) {padding:.25rem .5rem;border:0;border-radius:.25rem;background:rgb(1 15 24 / .65);color:var(--cream);box-shadow:none;font:400 .6875rem/1.3 var(--body-font);}
+  .routes :global(.route-place-label::before) {display:none;}
+  .routes :global(.leaflet-control-attribution) {max-width:75%;padding:.25rem .5rem;background:rgb(1 15 24 / .75);color:var(--cream);font:400 .5625rem/1.4 var(--body-font);}
+  .routes :global(.leaflet-image-layer) {max-width:none;}
+  @keyframes marker-pulse {0%,100% {transform:scale(1);}50% {transform:scale(1.1);}}
+  @media(max-width:68.75rem) {.routes h2 {font-size:3.25rem;color:var(--cream);}.routes__header {left:2.5rem;right:2.5rem;}.routes__intro {left:2.5rem;bottom:3rem;}.routes__details {font-size:.8125rem;}}
+  @media(max-width:47.5rem) {.routes {padding:0 1.25rem 4rem;}.routes__stage {min-height:0;padding-bottom:32rem;display:flex;flex-direction:column;}.route-map__canvas {top:auto;height:32rem;}.routes__shade {display:none;}.routes__header {position:relative;top:auto;left:auto;right:auto;padding:1.5rem;flex-wrap:wrap;gap:1.25rem;}.routes__header>p {font-size:.75rem;}.routes__intro {position:relative;left:auto;bottom:auto;width:auto;max-width:none;padding:1rem 1.5rem 2rem;}.routes__eyebrow {margin-bottom:1rem;}.routes__copy {font-size:1rem;}.routes__details {font-size:.875rem;}.route-map__tools {position:relative;top:auto;bottom:auto;right:auto;display:flex;align-self:flex-end;margin:0 1.5rem 1rem;}.routes__footer {gap:.75rem 1rem;}.routes__footer>p {margin-left:0;}.routes__footer label {flex-wrap:wrap;}}
+  @media(max-width:40rem) {.routes h2 {font-size:2.5rem;color:var(--cream);}}
+  @media(prefers-reduced-motion:reduce) {.routes :global(.route-pin__dot) {animation:none;}.route-map__tools button {transition:none;}}
+.route-map__popup h3 {color:#1e1e1e;}
+
+
+.route-map__popup {background:var(--paper);color:var(--navy);}
+.route-map__popup h3 {color:#1e1e1e;}
+.route-map__popup::after {background:var(--paper);}
+.route-map__popup a :global(.theme-action) {--action-size:2.0625rem;font-size:.609375rem;color:var(--cream);}
+.route-map__popup a :global(.theme-action__label) {padding-inline:1.078125rem;background:var(--navy);color:var(--cream);}
+.route-map__popup a :global(.theme-action__circle) {font-size:.84375rem;background:var(--navy);color:var(--cream);}
+.route-map__popup a:is(:hover,:focus-visible) :global(.theme-action__label),.route-map__popup a:is(:hover,:focus-visible) :global(.theme-action__circle) {background:var(--red);color:var(--cream);}
+</style>
+

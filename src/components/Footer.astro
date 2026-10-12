@@ -1,0 +1,51 @@
+---
+const groups = [
+  {title:'About',links:[['Our Story','#about'],['The Boat','#vessel'],['Deck Plans','#deck-plans'],['Travel Sustainable','#sustainability']]},
+  {title:'Destinations',links:[['Tromsø & the Arctic Coast','#routes'],['Lofoten & Vesterålen','#experiences'],['Our Stops','#stops'],['Private Charters','#charters']]},
+  {title:'Explore',links:[['Choose Your Experience','#experiences'],['Life Aboard','#gallery'],['The Documentary','#documentary'],['Plan Your Cruise','#plan-your-cruise']]},
+];
+---
+<footer class="site-footer" id="contact" aria-labelledby="footer-heading">
+  <div class="site-footer__layout">
+    <div class="site-footer__brand">
+      <div class="site-footer__brand-heading">
+      <a href="#home" aria-label="Norwegian Fjord Explorer home"><img src="/images/explorer-logo.png" alt="Norwegian Fjord Explorer" width="53" height="53" loading="lazy" /></a>
+      <h2 id="footer-heading">Your next chapter,<br />on the water.</h2>
+      </div>
+      <div class="site-footer__brand-content">
+      <a class="site-footer__phone" href="tel:+4794791130">+47 947 91 130 <span aria-hidden="true">↗</span></a>
+      <a class="site-footer__email" href="mailto:booking@norwegianfjordexplorer.com">booking@norwegianfjordexplorer.com <span aria-hidden="true">↗</span></a>
+      <p>Group travel: <a href="tel:+4792163985">+47 921 63 985</a></p>
+      <address>Norwegian Fjord Explorer Line AS<br />Strandgata 9, 9008 Tromsø, Norway.</address>
+      <p class="site-footer__dock">Ship’s dock: dockside of the land office,<br />by bus stop Nerstranda, 9008 Tromsø.</p>
+      </div>
+    </div>
+    {groups.map(group=><nav class="site-footer__group" aria-label={`${group.title} footer links`}><h3>{group.title}</h3><ul>{group.links.map(([label,href])=><li><a href={href}>{label}</a></li>)}</ul></nav>)}
+  </div>
+  <div class="site-footer__bottom"><p>© {new Date().getFullYear()} Norwegian Fjord Explorer Line AS</p><a href="mailto:booking@norwegianfjordexplorer.com?subject=Booking%20terms%20and%20privacy%20enquiry">Booking &amp; privacy enquiries</a><a href="#home">Back to top <span aria-hidden="true">↑</span></a></div>
+</footer>
+<style>
+  .site-footer {padding:5rem var(--page-gutter) 2rem;background:#0f1f38;color:var(--cream);}
+  .site-footer__layout {display:grid;grid-template-columns:1.7fr repeat(3,1fr);gap:3rem;max-width:90rem;margin:auto;}
+  .site-footer__brand {min-width:0;}
+  .site-footer__brand img {display:block;width:3.3125rem;height:3.3125rem;margin-bottom:1.75rem;}
+  .site-footer h2 {margin:0 0 1.75rem;color:var(--cream);font:400 2.53125rem/1.1 var(--heading-font);}
+  .site-footer__phone,.site-footer__email {display:block;font:400 1rem/1.6 var(--body-font);margin-bottom:.5rem;overflow-wrap:anywhere;}
+  .site-footer__brand-content>p,.site-footer address {font:400 .9375rem/1.6 var(--body-font);font-style:normal;margin:1rem 0;}
+  .site-footer__group h3 {margin:.5rem 0 1.5rem;font:400 1.125rem/1.5 'IBM Plex Mono',monospace;text-transform:uppercase;}
+  .site-footer__group ul {list-style:none;margin:0;padding:0;}
+  .site-footer__group li+li {margin-top:1rem;}
+  .site-footer a {text-decoration:none;transition:color 250ms;}
+  .site-footer a:is(:hover,:focus-visible) {color:var(--cream);text-decoration:underline;text-underline-offset:.25rem;}
+  .site-footer__group a {font:400 1rem/1.5 var(--body-font);}
+  .site-footer__bottom {display:flex;align-items:center;flex-wrap:wrap;gap:1rem 2rem;max-width:90rem;margin:4rem auto 0;padding-top:1.5rem;border-top:.0625rem solid rgb(255 250 231 / .25);font:400 .8125rem/1.5 var(--body-font);}
+  .site-footer__bottom p {margin:0;margin-right:auto;}
+  @media(max-width:68.75rem) {.site-footer__layout {grid-template-columns:repeat(3,minmax(0,1fr));gap:2.5rem;}.site-footer__brand {grid-column:1/-1;max-width:32rem;}}
+  @media(max-width:40rem) {.site-footer {padding-top:3rem;}.site-footer__layout {grid-template-columns:repeat(2,minmax(0,1fr));gap:2rem;}.site-footer__brand {max-width:none;}.site-footer h2 {font-size:2.25rem;}.site-footer__group h3 {font-size:.875rem;}.site-footer__group a {font-size:.9375rem;}.site-footer__bottom {margin-top:3rem;align-items:flex-start;flex-direction:column;}}
+  @media(prefers-reduced-motion:reduce) {.site-footer a {transition:none;}}
+
+@media(min-width:40.0001rem) and (max-width:68.75rem) {
+  .site-footer__brand {width:100%;max-width:none;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start;}
+  .site-footer__brand-heading,.site-footer__brand-content {min-width:0;}
+}
+</style>

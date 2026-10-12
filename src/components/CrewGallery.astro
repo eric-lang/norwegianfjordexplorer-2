@@ -1,0 +1,167 @@
+---
+
+const photos = [
+
+  {caption:'From the fjord to the mountain: share a snowy Arctic adventure with Captain Mads and fellow travellers.',alt:'Captain Mads and guests ready for a snowy mountain adventure',width:493,height:535},
+
+  {caption:'A moment on deck with the crew, watching the coastline unfold and finding the next story along the fjord.',alt:'Two crew members looking out across the fjord from the deck',width:364,height:332},
+
+  {caption:'Get to know the people behind the journey—local stories, easy conversation, and life aboard the explorer.',alt:'Captain and crew sharing stories aboard the explorer vessel',width:469,height:458},
+
+  {caption:'Go beyond the waterfront into the snowy landscape, where time ashore becomes part of the Arctic journey.',alt:'A winter journey through the snowy Norwegian landscape',width:295,height:284},
+
+];
+
+---
+
+<section class="crew-gallery" id="gallery" aria-labelledby="gallery-heading">
+
+  <header class="crew-gallery__header" data-reveal><p class="crew-gallery__eyebrow">Life aboard &amp; beyond</p><h2 id="gallery-heading">Real People, Real Adventures</h2><p>Sail with Captain Mads &amp; his team to the hidden treasures in and around Tromsø, and get to know more about the Arctic capital.</p></header>
+
+  <div class="crew-gallery__track" id="crew-gallery-track" tabindex="0" role="region" aria-label="Crew and Arctic adventures photo gallery" data-reveal>
+
+    {photos.map((photo,index)=><figure class="crew-gallery__photo" tabindex="0" data-photo={index} style={`--photo-width:${photo.width/16}rem;--photo-height:${photo.height/16}rem;--photo-fluid-width:${photo.width/14.4}vw;--photo-fluid-height:${photo.height/14.4}vw`}>
+
+      <div class="crew-gallery__image"><img src={`/images/crew-gallery-${index+1}.webp`} alt={photo.alt} width="1000" height="1000" loading="lazy" /></div>
+
+      <figcaption>{photo.caption}</figcaption>
+
+    </figure>)}
+
+  </div>
+
+  <div class="crew-gallery__controls" data-reveal>
+
+    <button type="button" data-gallery-direction="-1" aria-label="Previous gallery photos" aria-controls="crew-gallery-track"><svg viewBox="0 0 30 18" aria-hidden="true"><path d="M28 9H2m0 0 7-7M2 9l7 7"/></svg></button>
+
+    <button type="button" data-gallery-direction="1" aria-label="Next gallery photos" aria-controls="crew-gallery-track"><svg viewBox="0 0 30 18" aria-hidden="true"><path d="M2 9h26m0 0-7-7m7 7-7 7"/></svg></button>
+
+  </div>
+
+</section>
+
+<script>
+
+  const gallery=document.querySelector<HTMLElement>('.crew-gallery');
+
+  if(gallery) {
+
+    const track=gallery.querySelector<HTMLElement>('.crew-gallery__track')!;
+
+    const previous=gallery.querySelector<HTMLButtonElement>('[data-gallery-direction="-1"]')!;
+
+    const next=gallery.querySelector<HTMLButtonElement>('[data-gallery-direction="1"]')!;
+
+    const motion=window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const originals=Array.from(track.children) as HTMLElement[];
+
+    for(const side of ['before','after']) {
+
+      const copies=originals.map(photo=>{
+
+        const copy=photo.cloneNode(true) as HTMLElement;
+
+        copy.setAttribute('aria-hidden','true');
+
+        copy.tabIndex=-1;
+
+        copy.dataset.clone='true';
+
+        return copy;
+
+      });
+
+      if(side==='before') track.prepend(...copies); else track.append(...copies);
+
+    }
+
+    const base=()=>originals[0].offsetLeft;
+
+    const span=()=> (originals[originals.length-1].nextElementSibling as HTMLElement).offsetLeft-base();
+
+    let previousBase=0,previousSpan=0;
+
+    let settling:ReturnType<typeof setTimeout>;
+
+    function normalize(){
+
+      const start=base(),length=span();
+
+      if(!length)return;
+
+      if(track.scrollLeft<start-2||track.scrollLeft>=start+length-2) {
+
+        const offset=((track.scrollLeft-start)%length+length)%length;
+
+        track.scrollTo({left:start+offset,behavior:'instant'});
+
+      }
+
+    }
+
+    function move(direction:number){
+
+      const positions=Array.from(track.children).map(photo=>(photo as HTMLElement).offsetLeft);
+
+      const target=direction>0 ? positions.find(position=>position>track.scrollLeft+3) ?? track.scrollWidth : positions.reverse().find(position=>position<track.scrollLeft-3) ?? 0;
+
+      track.scrollTo({left:target,behavior:motion.matches?'instant':'smooth'});
+
+    }
+
+    previous.addEventListener('click',()=>move(-1));
+
+    next.addEventListener('click',()=>move(1));
+
+    track.addEventListener('keydown',event=>{
+
+      if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();move(event.key==='ArrowLeft'?-1:1);}
+
+      if(event.key==='Home'||event.key==='End'){event.preventDefault();track.scrollTo({left:event.key==='Home'?base():originals[originals.length-1].offsetLeft,behavior:motion.matches?'instant':'smooth'});}
+
+    });
+
+    track.addEventListener('scrollend',normalize);
+
+    track.addEventListener('scroll',()=>{clearTimeout(settling);settling=setTimeout(normalize,180);},{passive:true});
+
+    new ResizeObserver(()=>{
+
+      const fraction=previousSpan ? ((track.scrollLeft-previousBase)%previousSpan+previousSpan)%previousSpan/previousSpan : 0;
+
+      previousBase=base();previousSpan=span();
+
+      track.scrollTo({left:previousBase+fraction*previousSpan,behavior:'instant'});
+
+    }).observe(track);
+
+    track.scrollTo({left:base(),behavior:'instant'});
+
+  }
+
+</script>
+<style>
+  .crew-gallery {padding:4rem 0 6rem;background:var(--paper);color:var(--navy);}
+  .crew-gallery__header {text-align:center;padding:0 var(--page-gutter);margin:0 auto 3rem;}
+  .crew-gallery__eyebrow {color:var(--red);font:400 1.125rem/1.5 'IBM Plex Mono',monospace;}
+  .crew-gallery h2 {margin:1rem 0 1.5rem;color:#1e1e1e;font:400 3.9375rem/1.11 var(--heading-font);}
+  .crew-gallery__header>p:last-child {max-width:43rem;margin:auto;font:400 1.125rem/1.65 var(--body-font);}
+  .crew-gallery__track {position:relative;display:flex;align-items:flex-start;gap:.75rem;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;}
+  .crew-gallery__track::-webkit-scrollbar {display:none;}
+  .crew-gallery__photo {flex:none;width:calc((100% - 1.5rem)/3);margin:0;scroll-snap-align:start;}
+  .crew-gallery__image {aspect-ratio:633.59/418.17;overflow:hidden;background:var(--navy);}
+  .crew-gallery__photo figcaption {min-height:7rem;padding:1.125rem 1.5rem 0;font:400 1rem/1.6 var(--body-font);opacity:0;transform:translateY(.625rem);transition:opacity 350ms,transform 350ms;}
+  .crew-gallery__photo:is(:hover,:focus-within) figcaption {opacity:1;transform:translateY(0);}
+  .crew-gallery__photo img {display:block;width:100%;height:100%;object-fit:cover;transform:scale(1.04);transition:transform 800ms cubic-bezier(.22,1,.36,1),filter 500ms;}
+  .crew-gallery__photo:is(:hover,:focus-within) img {transform:scale(1);filter:brightness(.9);}
+  .crew-gallery__controls {display:flex;justify-content:center;gap:.75rem;margin:1.5rem var(--page-gutter) 0;}
+  .crew-gallery__controls button {display:grid;place-items:center;width:3rem;height:3rem;border:.0625rem solid var(--navy);border-radius:50%;padding:.625rem;background:transparent;color:var(--navy);cursor:pointer;transition:color 250ms,background 250ms;}
+  .crew-gallery__controls svg {width:1.625rem;height:1.125rem;fill:none;stroke:currentColor;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;}
+  .crew-gallery__controls button:is(:hover,:focus-visible) {background:var(--navy);color:var(--cream);}
+  @media(max-width:68.75rem) {.crew-gallery h2 {font-size:3.25rem;}.crew-gallery__photo {width:calc((100% - .75rem)/2);}}
+  @media(max-width:40rem) {.crew-gallery {padding:3rem 0;}.crew-gallery h2 {font-size:2.5rem;}.crew-gallery__eyebrow {font-size:.875rem;}.crew-gallery__header>p:last-child {font-size:1rem;}.crew-gallery__photo {width:85%;}.crew-gallery__photo figcaption {padding-inline:1rem;min-height:8rem;}}
+  @media(hover:none) {.crew-gallery__photo figcaption {opacity:1;transform:none;}}
+  @media(prefers-reduced-motion:reduce) {.crew-gallery__photo img,.crew-gallery__photo figcaption,.crew-gallery__controls button {transition:none;}}
+</style>
+

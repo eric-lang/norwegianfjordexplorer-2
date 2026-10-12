@@ -1,0 +1,27 @@
+---
+import Arrow from './Arrow.astro';
+interface Props { label?: string; variant?: 'red' | 'cream'; class?: string; [key:string]: unknown; }
+const { label = 'Discover more', variant = 'red', class:extraClass='', ...attributes } = Astro.props;
+---
+<button class:list={['booking-button', `booking-button--${variant}`,extraClass]} type="button" {...attributes}>
+  <span class="booking-button__circle booking-button__circle--left" aria-hidden="true"><Arrow /></span>
+  <span class="booking-button__label">{label}</span>
+  <span class="booking-button__circle booking-button__circle--right" aria-hidden="true"><Arrow /></span>
+</button>
+<style>
+  .booking-button {--size:2.75rem;position:relative;isolation:isolate;display:inline-flex;align-items:center;flex:none;padding:0;border:0;background:none;color:var(--cream);text-decoration:none;transition:color 250ms;}
+  .booking-button__label {pointer-events:none;position:relative;z-index:2;display:grid;place-items:center;min-width:7rem;height:var(--size);padding:0 1.4375rem;border-radius:62.4375rem;background:var(--button-bg,var(--red));font:700 0.8125rem/1 var(--body-font);white-space:nowrap;transition:background 250ms,color 250ms,transform 480ms cubic-bezier(.22,1,.36,1);}
+  .booking-button__circle {pointer-events:none;position:relative;display:grid;place-items:center;width:var(--size);height:var(--size);flex:none;border-radius:50%;background:var(--button-bg,var(--red));transition:background 250ms,color 250ms,transform 480ms cubic-bezier(.22,1,.36,1),opacity 250ms;}
+  .booking-button__circle :global(svg) {width:1.125rem;height:1.125rem;}
+  .booking-button__circle--left {position:absolute;left:0;opacity:0;visibility:hidden;transform:scale(.65);}
+  .booking-button:is(:hover,:focus-visible) {color:var(--navy);}
+  .booking-button:is(:hover,:focus-visible) :is(.booking-button__circle,.booking-button__label) {background:var(--cream);}
+  .booking-button:is(:hover,:focus-visible) .booking-button__label {pointer-events:none;transform:translateX(var(--size));}
+  .booking-button:is(:hover,:focus-visible) .booking-button__circle--left {opacity:1;visibility:visible;transform:scale(1);}
+  .booking-button:is(:hover,:focus-visible) .booking-button__circle--right {opacity:0;visibility:hidden;transform:scale(.65);}
+  .booking-button--cream {color:var(--navy);}
+  .booking-button--cream :is(.booking-button__circle,.booking-button__label) {background:var(--cream);}
+  .booking-button--cream:is(:hover,:focus-visible) {color:var(--cream);}
+  .booking-button--cream:is(:hover,:focus-visible) :is(.booking-button__circle,.booking-button__label) {background:var(--navy);}
+  @media(prefers-reduced-motion:reduce) {.booking-button__label,.booking-button__circle {pointer-events:none;transition:none;}}
+</style>
